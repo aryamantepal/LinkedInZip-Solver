@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 300px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        h1 {
+            color: #0066cc;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .step {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #0066cc;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .instructions {
+            counter-reset: step-counter;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            color: #155724;
+            font-size: 14px;
+        }
+
+        .github-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .github-link a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎯 LinkedIn Zip Solver</h1>
+
+    <div class="status">
+        Extension is active! Navigate to a LinkedIn Zip game to use it.
+    </div>
+
+    <div class="instructions">
+        <div class="step">Go to LinkedIn Games and start a Zip puzzle</div>
+        <div class="step">Look for the solver control panel in the top-right corner</div>
+        <div class="step">Click "Solve" to find the solution</div>
+        <div class="step">Click "Show Solution" to see the path highlighted</div>
+        <div class="step">Click "Auto Play" to automatically solve the puzzle</div>
+    </div>
+
+    <div class="warning">
+        <strong>Note:</strong> This extension is for educational purposes. Use responsibly and consider the competitive
+        aspect of games with friends!
+    </div>
+
+    <div class="github-link">
+        <a href="#" id="help-link">Need help? Check the instructions</a>
+    </div>
+
+    <script>
+        // Check if we're on a LinkedIn page
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            const currentTab = tabs[0];
+            if (currentTab.url && currentTab.url.includes('linkedin.com')) {
+                document.querySelector('.status').textContent = 'Ready to solve LinkedIn Zip puzzles!';
+                document.querySelector('.status').style.background = '#d4edda';
+            } else {
+                document.querySelector('.status').textContent = 'Please navigate to linkedin.com/games to use this extension';
+                document.querySelector('.status').style.background = '#f8d7da';
+                document.querySelector('.status').style.color = '#721c24';
+                document.querySelector('.status').style.borderColor = '#f5c6cb';
+            }
+        });
+    </script>
+</body>
+
+</html>

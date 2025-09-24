@@ -2,21 +2,30 @@
     "manifest_version": 3,
     "name": "LinkedIn Zip Solver",
     "version": "1.0",
-    "description": "Auto-solve LinkedIn's Zip puzzle",
+    "description": "Auto-solve LinkedIn's Zip puzzle game to beat your friends!",
     "permissions": [
         "activeTab",
         "scripting"
     ],
+    "host_permissions": [
+        "*://www.linkedin.com/*"
+    ],
     "content_scripts": [
         {
             "matches": [
+                "*://www.linkedin.com/games/*",
                 "*://www.linkedin.com/games/zip/*"
             ],
             "js": [
                 "solver.js",
                 "overlay.js",
                 "content.js"
-            ]
+            ],
+            "run_at": "document_end"
         }
-    ]
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "LinkedIn Zip Solver"
+    }
 }
