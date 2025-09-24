@@ -165,8 +165,8 @@ function createControlPanel() {
 
     document.body.appendChild(panel);
 
-    // Add event listeners
-    document.getElementById('solve-btn').onclick = () => {
+    // Add event listeners (CSP-compliant way)
+    document.getElementById('solve-btn').addEventListener('click', () => {
         const status = document.getElementById('status');
         status.textContent = 'Solving...';
 
@@ -181,24 +181,24 @@ function createControlPanel() {
         } else {
             status.textContent = 'Could not read grid';
         }
-    };
+    });
 
-    document.getElementById('show-solution-btn').onclick = () => {
+    document.getElementById('show-solution-btn').addEventListener('click', () => {
         if (solutionPath.length > 0) {
             showSolution(solutionPath); // This function comes from overlay.js
         }
-    };
+    });
 
-    document.getElementById('auto-play-btn').onclick = () => {
+    document.getElementById('auto-play-btn').addEventListener('click', () => {
         if (solutionPath.length > 0) {
             autoPlay(solutionPath);
         }
-    };
+    });
 
-    document.getElementById('clear-btn').onclick = () => {
+    document.getElementById('clear-btn').addEventListener('click', () => {
         document.querySelectorAll('.zip-solver-highlight').forEach(el => el.remove());
         document.getElementById('status').textContent = '';
-    };
+    });
 }
 
 // Initialize when page loads
