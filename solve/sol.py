@@ -1,70 +1,129 @@
-from collections import deque
+#!/usr/bin/env python3
+"""
+solve/sol.py - Standalone Python Hamiltonian Path Solver for LinkedIn Zip puzzles.
+Features Warnsdorff / unvisited-degree pruning for fast solving on arbitrary grids.
+"""
 
-grid = [
-    [1, 0, 0],
-    [0, 2, 3],
-    [0, 0, 4],
-    [0, 0, 5],
-]
-
-rows, cols = len(grid), len(grid[0])
-positions = {}
-
-for r in range(rows):
-    for c in range(cols):
-        if grid[r][c] > 0:
-            positions[grid[r][c]] = (r, c)
-
-moves = {
-    (1, 0): "down",
-    (-1, 0): "up",
-    (0, 1): "right",
-    (0, -1): "left"
-}
-
-def in_bounds(r, c):
-    return 0 <= r < rows and 0 <= c < cols
-
-def bfs_path(start, end, visited):
-    """BFS that prefers unvisited cells, returns path of moves from start to end."""
-    q = deque([(start, [])])
-    seen = {start}
-    while q:
-        (r, c), path = q.popleft()
-        if (r, c) == end:
-            return path
-        for (dr, dc), move in moves.items():
-            nr, nc = r + dr, c + dc
-            if in_bounds(nr, nc) and (nr, nc) not in seen:
-                # prefer unvisited cells (zeros not yet seen)
-                priority = (nr, nc) not in visited
-                seen.add((nr, nc))
-                if priority:
-                    q.appendleft(((nr, nc), path + [move]))  # explore unvisited first
-                else:
-                    q.append(((nr, nc), path + [move]))
-    return []
-
-# Build the full traversal
-visited = set()
-full_path = []
-visited.add(positions[1])  # mark start as visited
-
-for k in range(1, 5):
-    start = positions[k]
-    end = positions[k+1]
-    steps = bfs_path(start, end, visited)
+def solve_zip(rows, cols, numbered_cells, down_walls=None, right_walls=None, blocked_cells=None):
+    down_walls = set(down_walls or [])
+    right_walls = set(right_walls or [])
+    blocked = set(blocked_cells or [])
     
-    # replay the moves to update visited along the way
-    r, c = start
-    for move in steps:
-        for (dr, dc), mname in moves.items():
-            if mname == move:
-                r, c = r + dr, c + dc
-                visited.add((r, c))
-                break
-    full_path.extend(steps)
+    size = rows * cols
+    valid_cells = set(range(size)) - blocked
+    total_valid = len(valid_cells)
+    
+    if not numbered_cells:
+        return None
+        
+    start_cell = numbered_cells[0]
+    end_cell = numbered_cells[-1]
+    
+    # Precompute adjacency
+    adj = {i: [] for i in range(size)}
+    for r in range(rows):
+        for c in range(cols):
+            u = r * cols + c
+            if u in blocked:
+                continue
+            # Right neighbor
+            if c + 1 < cols and u not in right_walls and (u + 1) not in blocked:
+                adj[u].append(u + 1)
+                adj[u + 1].append(u)
+            # Down neighbor
+            if r + 1 < rows and u not in down_walls and (u + cols) not in blocked:
+                adj[u].append(u + cols)
+                adj[u + cols].append(u)
+                
+    # Checkpoint lookup
+    cp_map = {idx: step + 1 for step, idx in enumerate(numbered_cells)}
+    
+    visited = set()
+    degrees = {i: len(adj[i]) for i in range(size)}
+    
+    path = [start_cell]
+    visited.add(start_cell)
 
-print("Order of numbers:", [1,2,3,4,5])
-print("Traversal path:", " -> ".join(full_path))
-print("Visited all?", len(visited) == rows * cols)
+    solution = []
+
+    def dfs(u, cp_idx):
+        if len(path) == total_valid:
+            if cp_idx == len(numbered_cells):
+                solution.extend(path)
+                return True
+            return False
+
+        next_cp = numbered_cells[cp_idx] if cp_idx < len(numbered_cells) else None
+
+        # Unvisited neighbors
+        candidates = [v for v in adj[u] if v not in visited]
+        candidates.sort(key=lambda v: degrees[v])
+
+        for v in candidates:
+            # Checkpoint constraint
+            next_cp_idx = cp_idx
+            if v in cp_map:
+                if v == next_cp:
+                    next_cp_idx = cp_idx + 1
+                else:
+                    continue
+
+            # Isolation check: leaving u impacts other unvisited neighbors of u
+            isolated = False
+            for w in adj[u]:
+                if w not in visited and w != v:
+                    # w has remaining degree degrees[w]. Leaving u means w loses an edge.
+                    # If w is end_cell and degrees[w] == 1 -> it will have 0 edges.
+                    # If w is not end_cell and degrees[w] == 2 -> it will have 1 edge (cannot enter and leave).
+                    if (w == end_cell and degrees[w] == 1) or (w != end_cell and degrees[w] == 2):
+                        isolated = True
+                        break
+            if isolated:
+                continue
+
+            # Decrement degrees for neighbor leaving u
+            for w in adj[u]:
+                if w not in visited:
+                    degrees[w] -= 1
+
+            # Visit v
+            visited.add(v)
+            path.append(v)
+
+            if dfs(v, next_cp_idx):
+                return True
+
+            # Backtrack
+            visited.remove(v)
+            path.pop()
+            for w in adj[u]:
+                if w not in visited:
+                    degrees[w] += 1
+
+        return False
+
+    import time
+    t0 = time.perf_counter()
+    found = dfs(start_cell, 1)
+    t1 = time.perf_counter()
+
+    if found:
+        print(f"[Python Solver] Solved in {(t1 - t0)*1000:.2f}ms. Total steps: {len(solution)}")
+        return solution
+    else:
+        print(f"[Python Solver] No solution found in {(t1 - t0)*1000:.2f}ms.")
+        return None
+
+
+if __name__ == "__main__":
+    print("Testing 6x6 Zip puzzle in Python...")
+    test_path = solve_zip(
+        rows=6,
+        cols=6,
+        numbered_cells=[0, 11, 12, 23, 24, 35, 30],
+        down_walls=[],
+        right_walls=[]
+    )
+    if test_path:
+        coords = [(idx // 6, idx % 6) for idx in test_path]
+        print("Path:", coords[:6], "...", coords[-3:])

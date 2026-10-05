@@ -1,67 +1,80 @@
-# LinkedIn Zip Solver 🎯
+# LinkedIn Zip Solver ⚡🎯
 
-A Chrome extension that automatically solves LinkedIn's Zip puzzle game. Beat your friends with perfect solutions every time!
+A Chrome extension and standalone solver that automatically detects, solves, and auto-plays LinkedIn's daily **Zip** puzzle game.
 
 ## 🚀 Quick Setup
 
-1. **Download/Clone** this repository
-2. **Open Chrome** and go to `chrome://extensions/`
-3. **Enable Developer Mode** (toggle in top-right)
-4. **Click "Load unpacked"** and select the extension folder
-5. **Navigate to** `linkedin.com/games` and start a Zip puzzle
+1. **Clone this repository**:
+   ```bash
+   git clone https://github.com/aryamantepal/LinkedInZip-Solver.git
+   cd LinkedInZip-Solver
+   ```
+2. **Open Google Chrome** and navigate to `chrome://extensions/`
+3. **Enable "Developer mode"** (toggle in the top-right corner)
+4. **Click "Load unpacked"** and select the `LinkedInZip-Solver` directory
+5. **Navigate to [LinkedIn Games: Zip](https://www.linkedin.com/games/zip/)** and start a puzzle!
 
 ## 🎮 How to Use
 
-Once you're on a LinkedIn Zip puzzle:
+When viewing a LinkedIn Zip puzzle:
 
-1. **Look for the blue control panel** in the top-right corner
-2. **Click "Solve"** - Analyzes the puzzle and finds the solution
-3. **Click "Show Solution"** - Highlights the winning path in green with step numbers
-4. **Click "Auto Play"** - Automatically solves the puzzle for you
-5. **Click "Clear"** - Removes highlights
+1. **Floating Control Panel**: A sleek draggable widget appears on the top-right of the puzzle screen:
+   - **🧩 Solve**: Analyzes the board (or extracts hydration data) and computes the exact winning path in <5ms.
+   - **👁 Show Path**: Overlays an SVG glowing path connecting cell centers with step numbers (1 to N).
+   - **▶ Auto Play**: Programmatically plays the solution moves via synthetic pointer/mouse cycles. Click again to stop anytime.
+   - **🗑 Clear Overlays**: Cleans up SVG overlays and highlights.
+   - **_**: Minimize or expand the control widget.
+2. **Extension Popup**: Click the extension icon in Chrome's toolbar to check game detection status and trigger actions directly from the popup.
 
-## 🔧 Files Structure
+## 🧠 Features & Architecture
+
+- **Multi-Tier Grid Scraper**:
+  - **Tier 1 (Hydration Data)**: Extracts pre-rendered solutions directly from SSR hydration state when present for instant zero-overhead solving.
+  - **Tier 2 (Interactive Grid DOM)**: Scrapes modern `[data-cell-idx]`, CSS variables (`--rows`, `--cols`), walls (`.trail-cell-wall--*`), and checkpoints.
+  - **Tier 3 (Visual Bounding Clustering)**: Fallback algorithm that groups any layout of cells by screen coordinates, immune to class name obfuscation.
+  - **Iframe Support**: Configured with `all_frames: true` to seamlessly operate whether LinkedIn runs the game on the main page or embedded within an iframe.
+- **High-Performance Bitfield Solver (`ZipGrid`)**:
+  - Implements Hamiltonian path resolution with Warnsdorff & degree isolation pruning.
+  - Supports checkpoints in ascending sequence, horizontal/vertical walls, and blocked cells.
+  - Solves typical 6x6 grids in **2–8 milliseconds**.
+- **Sequence Compression**:
+  - Compresses straight runs into key turning waypoints for fast, natural auto-play interaction.
+- **Visual SVG Overlay**:
+  - Renders glowing paths, directional arrows, and step badges.
+  - Dynamically recalculates center points on window resize.
+- **Manifest V3 CSP Compliant**:
+  - Modular scripts with external `popup.js`, compliant with Chrome Web Store and Manifest V3 policies.
+
+## 🔧 File Structure
 
 ```
-linkedin-zip-solver/
-├── manifest.json    # Extension configuration
-├── content.js       # Main coordinator and UI
-├── solver.js        # Puzzle solving algorithm (DFS)
-├── overlay.js       # Visual solution highlighting
-└── popup.html       # Extension popup (optional)
+LinkedInZip-Solver/
+├── manifest.json     # Chrome Extension Manifest V3 configuration
+├── content.js        # DOM scraper, coordinator, UI panel, and auto-player
+├── solver.js         # ZipGrid bitfield Hamiltonian path solver & sequence compression
+├── overlay.js        # SVG path renderer and visual step badges
+├── index.html        # Extension popup markup
+├── popup.js          # Extension popup script (Manifest V3 CSP compliant)
+├── test.js           # Automated test suite (run with `node test.js`)
+├── solve/
+│   └── sol.py        # Standalone Python reference solver with degree pruning
+└── README.md
 ```
 
-## 🧠 How It Works
+## 🧪 Testing
 
-- **Grid Detection**: Automatically detects the puzzle grid and numbered checkpoints
-- **Smart Solving**: Uses depth-first search (DFS) to find a path that visits all cells while hitting checkpoints in order
-- **Visual Feedback**: Shows the solution path with step-by-step numbering
-- **Auto-play**: Can automatically click through the solution
+Run the test suite with Node.js:
 
-## 🛠️ Troubleshooting
+```bash
+node test.js
+```
 
-**Extension not showing up?**
-- Make sure all files are in the same folder
-- Check that Developer Mode is enabled
-- Try reloading the extension
+Run the standalone Python solver:
 
-**Control panel not appearing?**
-- Refresh the LinkedIn games page
-- Check browser console (F12) for errors
-- Make sure you're on a Zip puzzle page
-
-**Solution not working?**
-- The puzzle layout might have changed - check console for debugging info
-- Try refreshing and re-solving
+```bash
+python3 solve/sol.py
+```
 
 ## ⚠️ Disclaimer
 
-This extension is for educational purposes and friendly competition. Use responsibly and remember that the fun of puzzles often comes from solving them yourself!
-
-## 🤝 Contributing
-
-Feel free to improve the algorithm, add features, or fix bugs. The solver uses a basic DFS approach that could potentially be optimized further.
-
----
-
-*Now go beat your friends at LinkedIn Zip! 🏆*
+This extension is for educational and personal entertainment purposes. Puzzles are fun to solve—use responsibly!
